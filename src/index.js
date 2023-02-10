@@ -5,7 +5,7 @@ let beta = 3;
 Math.seedrandom(9797);
 
 // Make canvas dimensions
-var sdim = 256;
+var sdim = 512;
 var canvas = document.getElementById("noiseCanvas");
 var ctx = canvas.getContext("2d");
 
