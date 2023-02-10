@@ -72,14 +72,12 @@ for (let i = -Math.floor(sdim / 2); i < 0; i++) {
   f.push(i / sdim);
 }
 let u = [];
-for (let i = 0; i < f.length; i++) {
-  u[i] = f[i];
-}
-u = u.slice(0, sdim);
 let v = [];
 for (let i = 0; i < f.length; i++) {
+  u[i] = f[i];
   v[i] = f[i];
 }
+u = u.slice(0, sdim);
 v = v.slice(0, sdim);
 
 
