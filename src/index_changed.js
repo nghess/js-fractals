@@ -88,30 +88,40 @@ powerspectrum[0][0] = powerspectrum[0][1]
 
 //Up to this point we are good.
 
+noise_fft = math.fft(noise)
+//noise_fft = getRealPart(noise_fft)
+//noise_fft = normalizeArray(noise_fft)
+
+rearrangeQuarters(powerspectrum)
+
+fft_result = math.multiply(powerspectrum, noise)
+fft_result = normalizeArray(fft_result)
+//fft_result 
+
 // Perform ifft with mathjs
-let tester = Array(sdim).fill().map(() => Array(sdim).fill(2.3));
-let fft_result = Array(sdim).fill().map(() => Array(sdim).fill(0));
-let cos = Array(sdim).fill().map(() => Array(sdim).fill(0));
-let sin = Array(sdim).fill().map(() => Array(sdim).fill(0));
-let waves = Array(sdim).fill().map(() => Array(sdim).fill(0));
-for (let i = 0; i < sdim; i++) {
-  for (let j = 0; j < sdim; j++) {
-    cos[i][j] = math.cos(2 * Math.PI * noise[i][j]);
-    sin[i][j] = math.sin(2 * Math.PI * noise[i][j]);
-    cos[i][j] = math.complex(cos[i][j], 0)
-    sin[i][j] = math.complex(0, sin[i][j])
-    waves[i][j] = math.add(cos[i][j], sin[i][j])
-    powerspectrum[i][j] = math.sqrt(powerspectrum[i][j])
-    //console.log(sin)
-
-  }
-}
-
-for (let i = 0; i < sdim; i++) {
-  for (let j = 0; j < sdim; j++) {
-  fft_result[i][j] = math.multiply(powerspectrum[i][j], waves[i][j])
-  } 
-}
+//let tester = Array(sdim).fill().map(() => Array(sdim).fill(2.3));
+//let fft_result = Array(sdim).fill().map(() => Array(sdim).fill(0));
+//let cos = Array(sdim).fill().map(() => Array(sdim).fill(0));
+//let sin = Array(sdim).fill().map(() => Array(sdim).fill(0));
+//let waves = Array(sdim).fill().map(() => Array(sdim).fill(0));
+//for (let i = 0; i < sdim; i++) {
+//  for (let j = 0; j < sdim; j++) {
+//    cos[i][j] = math.cos(2 * Math.PI * noise[i][j]);
+//    sin[i][j] = math.sin(2 * Math.PI * noise[i][j]);
+//    cos[i][j] = math.complex(cos[i][j], 0)
+//    sin[i][j] = math.complex(0, sin[i][j])
+//    waves[i][j] = math.add(cos[i][j], sin[i][j])
+//    powerspectrum[i][j] = math.sqrt(powerspectrum[i][j])
+//    //console.log(sin)
+//
+//  }
+//}
+//
+//for (let i = 0; i < sdim; i++) {
+//  for (let j = 0; j < sdim; j++) {
+//  fft_result[i][j] = math.multiply(powerspectrum[i][j], waves[i][j])
+//  } 
+//}
 
 //fft_result = math.multiply(powerspectrum, waves)
 
@@ -126,12 +136,39 @@ function getRealPart(complexArray) {
   return realpart;
 }
 
+function rearrangeQuarters(arr) {
+  let rows = arr.length;
+  let cols = arr[0].length;
+  let quarterRows = Math.floor(rows / 2);
+  let quarterCols = Math.floor(cols / 2);
+  // Split the array into quarters
+  let topLeft = [];
+  let topRight = [];
+  let bottomLeft = [];
+  let bottomRight = [];
+  for (let i = 0; i < quarterRows; i++) {
+    topLeft.push(arr[i].slice(0, quarterCols));
+    topRight.push(arr[i].slice(quarterCols));
+  }
+  for (let i = quarterRows; i < rows; i++) {
+    bottomLeft.push(arr[i].slice(0, quarterCols));
+    bottomRight.push(arr[i].slice(quarterCols));
+  }
+  // Rearrange the quarters
+  let result = [];
+  for (let i = 0; i < quarterRows; i++) {
+    result.push(bottomRight[i].concat(bottomLeft[i]));
+  }
+  for (let i = 0; i < quarterRows; i++) {
+    result.push(topRight[i].concat(topLeft[i]));
+  }
+
+  return result;
+}
+
 noise = normalizeArray(getRealPart(math.ifft(fft_result)))
-//noise = fft_result
 
-let real = []
-
-
+//noise = rearrangeQuarters(noise)
 
 for (let i = 0; i < sdim; i++) {
   for (let j = 0; j < noise[i].length; j++) {
