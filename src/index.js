@@ -1,18 +1,21 @@
-//const math = require("src/math.js");
+/*---PARAMS---*/
+
+// Set beta and seed of fractal
+let beta = 3;
+Math.seedrandom(9797);
 
 // Make canvas dimensions
-var sdim = 128;
+var sdim = 512;
 var canvas = document.getElementById("noiseCanvas");
 var ctx = canvas.getContext("2d");
 
-Math.seedrandom(117);
+/*---FUNCTIONS---*/
 
 // Standard Normal variate using Box-Muller transform.
 function gaussianRandom(mean = 0, stdev = 1) {
   let u = 1 - Math.random();
   let v = Math.random();
   let z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
-  // Transform to the desired mean and standard deviation:
   return z * stdev + mean;
 }
 
@@ -46,33 +49,28 @@ function generateWhiteNoise(width, height) {
   return noise;
 }
 
-
 // Build power spectrum frame
-len = sdim+1
+len = sdim
 let f = [];
-for (let i = 0; i <= Math.floor(len / 2); i++) {
-  f.push(i / len);
+for (let i = 0; i <= Math.floor(sdim / 2); i++) {
+  f.push(i / sdim);
 }
-for (let i = -Math.floor(len / 2); i < 0; i++) {
-  f.push(i / len);
+for (let i = -Math.floor(sdim / 2); i < 0; i++) {
+  f.push(i / sdim);
 }
-
 let u = [];
 for (let i = 0; i < f.length; i++) {
   u[i] = f[i];
 }
-u = u.slice(0, len);
-
+u = u.slice(0, sdim);
 let v = [];
 for (let i = 0; i < f.length; i++) {
   v[i] = f[i];
 }
-v = v.slice(0, len);
+v = v.slice(0, sdim);
 
-// Generate power spectrum
-let beta = 3.5;
-// Generate noise array and normalize
-var noise = normalizeArray(generateWhiteNoise(sdim, sdim));
+// Generate white 
+var noise = generateWhiteNoise(sdim, sdim);
 
 let powerspectrum = Array(sdim).fill().map(() => Array(sdim).fill(1));
 for (let i = 0; i < sdim; i++) {
@@ -83,39 +81,25 @@ for (let i = 0; i < sdim; i++) {
     );
   }
 }
-// Get rid of inf
+// Get rid of inf at corner
 powerspectrum[0][0] = powerspectrum[0][1]
 
-//Up to this point we are good.
-
-// Perform ifft with mathjs
-let tester = Array(sdim).fill().map(() => Array(sdim).fill(2.3));
-let fft_result = Array(sdim).fill().map(() => Array(sdim).fill(0));
+// Prepare arrays for IFFT
 let cos = Array(sdim).fill().map(() => Array(sdim).fill(0));
 let sin = Array(sdim).fill().map(() => Array(sdim).fill(0));
 let waves = Array(sdim).fill().map(() => Array(sdim).fill(0));
+let ps = Array(sdim).fill().map(() => Array(sdim).fill(0));
 for (let i = 0; i < sdim; i++) {
   for (let j = 0; j < sdim; j++) {
     cos[i][j] = math.cos(2 * Math.PI * noise[i][j]);
     sin[i][j] = math.sin(2 * Math.PI * noise[i][j]);
     cos[i][j] = math.complex(cos[i][j], 0)
     sin[i][j] = math.complex(0, sin[i][j])
-    waves[i][j] = math.add(cos[i][j], sin[i][j])
-    powerspectrum[i][j] = math.sqrt(powerspectrum[i][j])
-    //console.log(sin)
-
+    ps[i][j] = math.sqrt(powerspectrum[i][j])
   }
 }
 
-for (let i = 0; i < sdim; i++) {
-  for (let j = 0; j < sdim; j++) {
-  fft_result[i][j] = math.multiply(powerspectrum[i][j], waves[i][j])
-  } 
-}
-
-//fft_result = math.multiply(powerspectrum, waves)
-
-
+// Function to take real part of complex numbers
 function getRealPart(complexArray) {
   let realpart = Array(sdim).fill().map(() => Array(sdim).fill(0));
   for (let i = 0; i < sdim; i++) {
@@ -126,17 +110,23 @@ function getRealPart(complexArray) {
   return realpart;
 }
 
-noise = normalizeArray(getRealPart(math.ifft(fft_result)))
-//noise = fft_result
+// Create fractal
+waves = math.add(cos, sin)
+guts = math.dotMultiply(ps, waves)
+fractal = normalizeArray(getRealPart(math.ifft(guts)))
 
-let real = []
 
-
-
+// Render to canvas
+let imageData = ctx.createImageData(sdim, sdim);
+let data = imageData.data;
 for (let i = 0; i < sdim; i++) {
-  for (let j = 0; j < noise[i].length; j++) {
-    let value = Math.floor(noise[i][j] * 255);
-    ctx.fillStyle = "rgb(" + value + ", " + value + ", " + value + ")";
-    ctx.fillRect(j, i, 1, 1);
+  for (let j = 0; j < sdim; j++) {
+    let value = Math.floor(fractal[i][j] * 255);
+    let offset = (i * sdim + j) * 4;
+    data[offset + 0] = value;
+    data[offset + 1] = value;
+    data[offset + 2] = value;
+    data[offset + 3] = 255;
   }
 }
+ctx.putImageData(imageData, 0, 0);
