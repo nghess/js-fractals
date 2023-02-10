@@ -15,7 +15,7 @@ var ctx = canvas.getContext("2d");
 function gaussianRandom(mean = 0, stdev = 1) {
   let u = 1 - Math.random();
   let v = Math.random();
-  let z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+  let z = Math.sqrt(-2.0*Math.log(u)) * Math.cos(2.0*Math.PI*v);
   return z * stdev + mean;
 }
 
@@ -123,7 +123,7 @@ let imageData = ctx.createImageData(sdim, sdim);
 let data = imageData.data;
 for (let i = 0; i < sdim; i++) {
   for (let j = 0; j < sdim; j++) {
-    let value = Math.floor(waves[i][j] * 255);
+    let value = Math.floor(fractal[i][j] * 255);
     let offset = (i * sdim + j) * 4;
     data[offset + 0] = value;
     data[offset + 1] = value;
